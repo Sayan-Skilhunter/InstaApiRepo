@@ -3,8 +3,8 @@ package main
 import (
 	"bytes"
 	"net/http"
-
 	"net/http/httptest"
+
 	"testing"
 )
 
@@ -18,11 +18,8 @@ func PostRequestTest(t *testing.T) {
 		t.Fatal(err)
 	}
 	req.Header.Set("Content-Type", "application/json")
-	// rr := httptest.NewRecorder()
-	// a.Router.ServeHTTP(rr, req)
 
 	rr := httptest.NewRecorder()
-	// res, err := http.DefaultClient.Do(req)
 	handler := http.HandlerFunc(postTransaction)
 	handler.ServeHTTP(rr, req)
 	if err != nil {
