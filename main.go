@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"strings"
@@ -32,13 +31,11 @@ func statistics(w http.ResponseWriter, r *http.Request) {
 	var count int
 	var sum, max, min float64
 	w.Header().Set("content-type", "application/json")
-	currentTime := time.Now()
-
 	for _, v := range transaction_list {
 		t, err := time.Parse(time.RFC3339Nano, v.TransactionTime)
 
 		if err == nil {
-			if t.After(currentTime.Add(time.Second * -60)) {
+			if t.After(time.Now().UTC().Add(time.Second * -60)) {
 				sum += v.Amount
 				count++
 				if v.Amount > max {
@@ -49,16 +46,15 @@ func statistics(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-	res := &GetResponse{
-		Sum:   sum,
-		Avg:   sum / float64(count),
-		Max:   max,
-		Min:   min,
-		Count: count,
-	}
+	fmt.Println(sum, max, min, count)
+	res := &GetResponse{}
+	res.Sum = sum
+	res.Avg = sum / float64(count)
+	res.Max = max
+	res.Min = min
+	res.Count = count
 	des, _ := json.Marshal(res)
 	w.Write(des)
-	w.WriteHeader(http.StatusOK)
 }
 
 func postTransaction(w http.ResponseWriter, r *http.Request) {
@@ -75,7 +71,7 @@ func postTransaction(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(t)
 	parseError := err
 	if parseError == nil {
-		fmt.Println("Both timestamps : ", t, time.Now().UTC().Add(time.Second*-60))
+		fmt.Println("current time : ", time.Now().UTC().Add(time.Second*-60))
 		if t.Before(time.Now().UTC().Add(time.Second * -60)) {
 			w.Header().Set("content-type", "application/json")
 			http.Error(w, http.StatusText(http.StatusNoContent), http.StatusNoContent)
@@ -94,12 +90,15 @@ func postTransaction(w http.ResponseWriter, r *http.Request) {
 }
 
 func deleteTransactions(w http.ResponseWriter, r *http.Request) {
-	var transaction Transaction
-	err := json.NewDecoder(r.Body).Decode(&transaction)
-	if err == io.EOF {
+	// var transaction Transaction
+	// err := json.NewDecoder(r.Body).Decode(&transaction)
+	// if err == io.EOF {
+		fmt.Println(transaction_list)
 		transaction_list = transaction_list[:0]
-		w.WriteHeader(http.StatusNoContent)
-	}
+		fmt.Println(transaction_list)
+		// w.WriteHeader(http.StatusNoContent)
+		http.Error(w, http.StatusText(http.StatusNoContent), http.StatusNoContent)
+	// }
 }
 
 func main() {
